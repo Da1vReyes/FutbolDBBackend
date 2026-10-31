@@ -1,36 +1,38 @@
 # FutbolDB Backend
 
-API REST de un juego de **adivinar al futbolista**. El servidor elige un jugador al azar, te da dos pistas y tú vas acertando el resto de sus datos en tantos intentos como necesites.
+REST API for a **guess-the-footballer** game. The server picks a random player, gives you two clues, and you guess the rest of his details in as many attempts as you need.
 
-Proyecto personal de práctica con Java 17, Spring Boot 3, Spring Security (JWT) y PostgreSQL.
+Personal practice project built with Java 17, Spring Boot 3, Spring Security (JWT) and PostgreSQL.
 
-## Cómo se juega
+## How to play
 
-1. Te registras e inicias sesión (obtienes un token JWT).
-2. Creas una partida: el servidor elige un jugador y te da **2 pistas** (dos campos al azar con su valor).
-3. Envías tus respuestas para los campos que quieras. Los campos son: `edad`, `paisRegion`, `posicion`, `liga` y `equipoActual`.
-4. Cada intento te dice qué campos acertaste, cuáles fallaste y cuáles faltan. Los aciertos se acumulan.
-5. Cuando aciertas los 5 campos la partida termina y se revela el nombre del jugador, junto con el número de intentos.
+1. Register and log in (you get a JWT token).
+2. Create a game: the server picks a player and gives you **2 clues** (two random fields with their value).
+3. Send your answers for any of the fields. The fields are: `edad` (age), `paisRegion` (country/region), `posicion` (position), `liga` (league) and `equipoActual` (current team).
+4. Each attempt tells you which fields you got right, which you got wrong and which are still missing. Correct answers accumulate.
+5. When you get all 5 fields right the game ends and the player's name is revealed, along with the number of attempts.
 
-Las respuestas no distinguen mayúsculas de minúsculas. La posición se escribe con su abreviatura (`POR`, `DFC`, `MC`, `ED`, `DEL`...) y los países, ligas y equipos en inglés, como vienen de TheSportsDB (p. ej. `Spanish La Liga`).
+Answers are case-insensitive. The position is written with its Spanish abbreviation (`POR`, `DFC`, `MC`, `ED`, `DEL`...), and countries, leagues and teams are written in English, as they come from TheSportsDB (e.g. `Spanish La Liga`).
+
+> Note: field names and routes of the API (`edad`, `posicion`, `/api/game/nueva`, `responder`...) are in Spanish.
 
 ## Stack
 
-- Java 17, Spring Boot 3.3.5, Maven (wrapper incluido)
-- Spring Security + JWT (jjwt), contraseñas con BCrypt
+- Java 17, Spring Boot 3.3.5, Maven (wrapper included)
+- Spring Security + JWT (jjwt), passwords hashed with BCrypt
 - Spring Data JPA + PostgreSQL 16 (Docker Compose)
-- [TheSportsDB](https://www.thesportsdb.com/) como fuente de jugadores
-- springdoc-openapi (Swagger UI), JUnit 5 + Mockito + H2 para los tests
+- [TheSportsDB](https://www.thesportsdb.com/) as the source of players
+- springdoc-openapi (Swagger UI), JUnit 5 + Mockito + H2 for the tests
 
-## Cómo ejecutarlo
+## How to run it
 
-Requisitos: JDK 17 o superior y Docker.
+Requirements: JDK 17 or higher and Docker.
 
 ```bash
 cp .env.example .env
 ```
 
-Edita `.env`: pon una `DB_PASSWORD` y un `JWT_SECRET` de al menos 32 caracteres (por ejemplo `openssl rand -hex 32`). Si el puerto 5433 ya lo usas, cambia `DB_PORT`.
+Edit `.env`: set a `DB_PASSWORD` and a `JWT_SECRET` of at least 32 characters (for example `openssl rand -hex 32`). If port 5433 is already in use, change `DB_PORT`.
 
 ```bash
 docker compose up -d
@@ -42,9 +44,9 @@ set -a && source ../.env && set +a
 ./mvnw spring-boot:run
 ```
 
-La API queda en `http://localhost:8181` y Swagger UI en `http://localhost:8181/swagger-ui.html`.
+The API runs at `http://localhost:8181` and Swagger UI at `http://localhost:8181/swagger-ui.html`.
 
-Tests (no necesitan Postgres: usan H2 en memoria):
+Tests (they don't need Postgres: they use in-memory H2):
 
 ```bash
 cd Backend && ./mvnw test
@@ -52,20 +54,20 @@ cd Backend && ./mvnw test
 
 ## Endpoints
 
-| Método | Ruta | Auth | Descripción |
+| Method | Route | Auth | Description |
 |---|---|---|---|
-| POST | `/api/users/register` | no | Registra un usuario (`name`, `email`, `password` de 8 a 72 caracteres) |
-| POST | `/api/auth/login` | no | Devuelve `{"token": "..."}` |
-| GET | `/api/users/me` | sí | Datos del usuario autenticado |
-| POST | `/api/players/import/{nombre}` | sí | Importa de TheSportsDB los jugadores que coinciden con el nombre |
-| POST | `/api/game/nueva` | sí | Crea una partida y devuelve `gameId` + 2 pistas |
-| POST | `/api/game/{gameId}/responder` | sí | Evalúa las respuestas de la partida (solo el usuario que la creó) |
+| POST | `/api/users/register` | no | Registers a user (`name`, `email`, `password` of 8 to 72 characters) |
+| POST | `/api/auth/login` | no | Returns `{"token": "..."}` |
+| GET | `/api/users/me` | yes | Data of the authenticated user |
+| POST | `/api/players/import/{nombre}` | yes | Imports from TheSportsDB the players matching the name |
+| POST | `/api/game/nueva` | yes | Creates a game and returns `gameId` + 2 clues |
+| POST | `/api/game/{gameId}/responder` | yes | Evaluates the answers for the game (only the user who created it) |
 
-Los errores tienen siempre la forma `{"status", "error", "message", "timestamp"}` (400 validación, 401 sin credenciales, 404, 409, 502 si falla TheSportsDB).
+Errors always have the shape `{"status", "error", "message", "timestamp"}` (400 validation, 401 missing credentials, 404, 409, 502 if TheSportsDB fails).
 
-## Ejemplo de uso
+## Usage example
 
-La base empieza sin jugadores: impórtalos antes de jugar.
+The database starts without players: import some before playing.
 
 ```bash
 curl -X POST localhost:8181/api/users/register -H 'Content-Type: application/json' \
@@ -84,23 +86,23 @@ curl -X POST localhost:8181/api/game/1/responder -H "Authorization: Bearer $TOKE
 # {"finalizada":false,"intentos":1,"acertadosEstaRonda":["edad","posicion"],"faltantes":["paisRegion","liga","equipoActual"], ...}
 ```
 
-## Estructura
+## Structure
 
 ```
 Backend/src/main/java/edu/uam/futboldb/
-├── config/      SecurityConfig (BCrypt, rutas públicas), OpenApiConfig
+├── config/      SecurityConfig (BCrypt, public routes), OpenApiConfig
 ├── security/    JwtService, JwtAuthenticationFilter
-├── user/        registro, login, /me
-├── player/      entidad Player, importación desde TheSportsDB
-├── game/        Game, Campo, GameService (reglas del juego)
-└── exception/   ApiException + GlobalExceptionHandler (errores HTTP uniformes)
+├── user/        registration, login, /me
+├── player/      Player entity, import from TheSportsDB
+├── game/        Game, Campo, GameService (game rules)
+└── exception/   ApiException + GlobalExceptionHandler (uniform HTTP errors)
 ```
 
-## Limitaciones y mejoras futuras
+## Limitations and future improvements
 
-- Las pistas de **premios** (individuales y colectivos) se quitaron: no había una fuente fiable de datos y el scraper de Wikipedia original era solo una prueba. Podrían volver con una fuente de datos fiable.
-- Cualquier usuario autenticado puede importar jugadores; falta un rol de administrador.
-- Los valores se comparan como texto exacto en inglés (sin alias ni tolerancia a erratas).
-- Sin límite de intentos, puntuación ni ranking.
-- Sin migraciones (Flyway): el esquema lo crea Hibernate con `ddl-auto=update`.
-- La aplicación no está incluida en el `docker-compose.yml`; solo la base de datos.
+- The **awards** clues (individual and team) were removed: there was no reliable data source and the original Wikipedia scraper was only a test. They could come back with a reliable data source.
+- Any authenticated user can import players; an admin role is missing.
+- Values are compared as exact English text (no aliases or typo tolerance).
+- No attempt limit, scoring or ranking.
+- No migrations (Flyway): the schema is created by Hibernate with `ddl-auto=update`.
+- The application is not included in `docker-compose.yml`; only the database is.
