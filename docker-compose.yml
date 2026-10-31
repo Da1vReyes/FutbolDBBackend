@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    container_name: futboldb-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-futboldb}
+      POSTGRES_USER: ${DB_USER:-futboldb}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en .env (copia .env.example)}
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - futboldb-data:/var/lib/postgresql/data
+
+volumes:
+  futboldb-data:
